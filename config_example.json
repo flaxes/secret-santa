@@ -1,0 +1,10 @@
+{
+    "telegram": {
+        "botToken": "1111111111:XXXXXXXX-XXXXXXXXXXXXXXXXXXXXX"
+    },
+    "usersId": {
+        "11111111111_REPLACE_WITH_TELEGRAM_ID": "John Doe"
+    },
+    "giftsFile": "./gifts",
+    "timeForLastWishMin": 10
+}
