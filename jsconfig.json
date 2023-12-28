@@ -9,6 +9,6 @@
         "skipLibCheck": true,
         "outDir": "./build"
     },
-    "include": ["src/**/*", "langs/**/*", "types/**/*"],
+    "include": ["src/**/*", "langs/**/*", "types/**/*", "cli/**/*"],
     "exclude": ["build"]
 }

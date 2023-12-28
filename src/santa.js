@@ -3,6 +3,12 @@ const { usersId } = require("./lib/config");
 const storage = require("./lib/storage");
 
 class SantaModule {
+    /**
+     *
+     * @deprecated Doesn't supports odd number of players
+     * @param {string | number} santaId
+     * @returns
+     */
     #randomizeUser(santaId) {
         const users = Object.keys(usersId);
 
@@ -53,19 +59,17 @@ class SantaModule {
      * @param {string | number} santaId
      * @returns
      */
-    async rollUserForSanta(santaId) {
+    async registerUser(santaId) {
         const store = storage.getStorage();
 
-        if (store.santas[santaId]) {
-            return null;
+        if (santaId in store.santas) {
+            return false;
         }
 
-        const user = this.#randomizeUser(santaId);
-
-        store.santas[santaId] = user;
+        store.santas[santaId] = "";
         storage.updateStorage();
 
-        return user;
+        return true;
     }
 
     /**

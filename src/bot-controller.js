@@ -3,6 +3,7 @@ const santaModule = require("./santa");
 const lang = require("../langs");
 const storage = require("./lib/storage");
 const bot = require("./lib/bot");
+const { arrayShuffle, throwError } = require("./lib/helpers");
 
 /**
  * @template {InferCtx<any>} X
@@ -19,12 +20,26 @@ class BotController {
     #gameEndTimer = null;
 
     async notifyPLayers() {
-        const store = storage.getStorage();
-        const promises = Object.keys(store.santas).map((santa) => {
-            const target = store.santas[santa];
+        const { santas, wishes } = storage.getStorage();
+        const users = Object.keys(santas);
+
+        const targets = arrayShuffle(users);
+        const lastTarget = targets[targets.length - 1] || throwError("Array is empty");
+
+        for (let i = 0; i < targets.length - 1; i++) {
+            const santa = targets[i];
+            const target = targets[i + 1];
+
+            santas[santa] = target;
+        }
+
+        santas[lastTarget] = targets[0];
+
+        const promises = users.map((santa) => {
+            const target = santas[santa];
             const targetUsername = config.usersId[target];
 
-            const wish = store.wishes[target];
+            const wish = wishes[target];
             const wishText = wish ? lang.wishText.replace("{wish}", wish) : "";
 
             let txt = lang.end.replace("{username}", targetUsername).replace("{wishText}", wishText);
@@ -32,7 +47,7 @@ class BotController {
             return bot.api.sendMessage(santa, txt);
         });
 
-        await Promise.all(promises).catch((err) => console.error("OnEnd", err));
+        await Promise.allSettled(promises).catch((err) => console.error("OnEnd", err));
     }
 
     /**
@@ -49,9 +64,9 @@ class BotController {
             return lang.sorry;
         }
 
-        const user = await santaModule.rollUserForSanta(id);
+        const isRegistered = await santaModule.registerUser(id);
 
-        if (!user) {
+        if (!isRegistered) {
             return lang.already;
         }
 
@@ -83,10 +98,10 @@ class BotController {
         if (isEnd && !isNotified) {
             console.warn("Notify timer started!", config.timeForLastWishMin, "minutes");
 
-            this.#gameEndTimer = setTimeout(() => {
-                santaModule.setIsNotified();
+            this.#gameEndTimer = setTimeout(async () => {
+                await this.notifyPLayers();
 
-                this.notifyPLayers();
+                santaModule.setIsNotified();
             }, config.timeForLastWishMin * 60e3);
         }
     }
